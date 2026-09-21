@@ -61,15 +61,40 @@ cards <- list(
 )
 
 
-ui = page_sidebar(
+ui = page_navbar(
   theme = bs_theme(version = 5),
   title = "Analyse productiedata",
+  
+  # Behoudt de exacte zijbalk die je al had
   sidebar = sidebar(
     inputs
-    ),
-   !!!cards # Splicing operator zorgt dat de kaarten netjes naast/onder elkaar landen
+  ),
   
+  # Dit creëert een lege ruimte die de links naar rechts drukt
+  nav_spacer(),
+  
+  # De links aan de rechterkant van de navigatiebalk
+  nav_item(
+    tags$a(
+      shiny::icon("github"), " GitHub", 
+      href = "https://github.com/costerAnalytics/wsappproductie", 
+      target = "_blank",
+      style = "color: inherit; text-decoration: none;"
+    )
+  ),
+  nav_item(
+    tags$a(
+      shiny::icon("globe"), " Website van de workshop", 
+      href = "https://costeranalytics.github.io/workshoprshiny/", 
+      target = "_blank",
+      style = "color: inherit; text-decoration: none; margin-left: 15px;"
+    )
+  ),
+
+  !!!cards 
 )
+
+
 
 server = function(input, output,session) {
   dt <- reactive({ 
