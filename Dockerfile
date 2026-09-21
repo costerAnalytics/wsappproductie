@@ -6,6 +6,7 @@ RUN R -e "install.packages(c('shiny','tidyverse','DT','bslib'))"
  
 # Copy the Shiny app code
 COPY app.R /app/
+COPY data/productiedata.dat /app/data/
 # COPY data.Rda /app
 
 WORKDIR /app
