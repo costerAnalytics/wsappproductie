@@ -1,97 +1,63 @@
 library("shiny")
-library("bslib") ## hiermee mooie opmaak van app
-library("tidyverse") ## hiermee ggplot2, tidyr, libridate en veel meer
-library(DT) ## om output van tabellen te maken
+library("bslib")
+library("tidyverse")
+library("DT")
 
 data <- read.table('data/productiedata.dat',
                    sep = ",",
                    dec = ".",
                    na.strings = "NA") |> 
-  rename(vreettijd = 15) |> ## hernoem kolom 15, geen spaties
-  rename_with(tolower) |> ## alles naar kleine letters
-  mutate(datum = parse_date_time(datum,orders = "%Y-%m-%d")) |> 
+  rename(vreettijd = 15) |> 
+  rename_with(tolower) |> 
+  mutate(datum = parse_date_time(datum, orders = "%Y-%m-%d")) |> 
   mutate(id = factor(id))
-
 
 km <- colnames(data)[-c(1:4)]
 
-
-## lijst met inputs, dit maakt de app beter te begrijpen
 inputs <- list(
-  selectInput(inputId = "kenmerk",
-                                label = "Selecteer kenmerk(en)",
-                                choices = km,
-                                selected = km[1],
-                                multiple = T),
-  selectInput(inputId = "dieren",
-              label = "Selecteer dier(en)",
-              choices = unique(data$id),
-        
-              multiple = T),
-  sliderInput(inputId = 'lacts',
-              label = "Laktaties:",
-              min = min(data$lactatie,na.rm = T),
-              max = max(data$lactatie,na.rm = T),
-              step = 1,
-              value = c(1,3)
-  ),
-  sliderInput(inputId = 'dims',
-              label = "Laktatiedagen:",
-              min = min(data$dim,na.rm = T),
-              max = max(data$dim,na.rm = T),
-              step = 1,
-              value = c(1,365)
-  )
+  selectInput(inputId = "kenmerk", label = "Selecteer kenmerk(en)", choices = km, selected = km[1], multiple = T),
+  selectInput(inputId = "dieren", label = "Selecteer dier(en)", choices = unique(data$id), multiple = T),
+  sliderInput(inputId = 'lacts', label = "Laktaties:", min = min(data$lactatie, na.rm = T), max = max(data$lactatie, na.rm = T), step = 1, value = c(1,3)),
+  sliderInput(inputId = 'dims', label = "Laktatiedagen:", min = min(data$dim, na.rm = T), max = max(data$dim, na.rm = T), step = 1, value = c(1,365)),
+  hr(),
+  # Extra: Downloadknop toegevoegd aan de zijbalk
+  downloadButton("download_data", "Download gefilterde data", class = "btn-outline-primary btn-sm w-100")
 )
 
 cards <- list(
+  # Extra: Waarde-boxen voor snelle statistieken bovenaan
+  layout_column_wrap(
+    width = 1/2,
+    value_box(title = "Geselecteerde Rijen", value = textOutput("stat_rijen"), showcase = shiny::icon("database")),
+    value_box(title = "Geselecteerde Dieren", value = textOutput("stat_dieren"), showcase = shiny::icon("cow"), theme = "teal")
+  ),
   card(
     full_screen = TRUE,
     card_header("Kenmerken over de tijd"),
-    card_body(plotOutput("grafiek")) # Correctie: functie-aanroep met haakjes
+    card_body(plotOutput("grafiek"))
   ),
   card(    
     full_screen = TRUE,
     card_header("Tabel van de gegevens"),
-    card_body(
-      fillable = TRUE,
-      DTOutput("tabel") 
-    )
+    card_body(fillable = TRUE, DTOutput("tabel"))
   )
 )
 
-
 ui = page_navbar(
-  theme = bs_theme(version = 5),
+  theme = bs_theme(version = 5, bootswatch = "flatly"), 
   title = "Analyse productiedata",
+  sidebar = sidebar(inputs),
   
-  # Behoudt de exacte zijbalk die je al had
-  sidebar = sidebar(
-    inputs
+  nav_panel(
+    title = "Dashboard",
+    cards
   ),
   
-  # Dit creëert een lege ruimte die de links naar rechts drukt
+  # Dit zorgt dat de links strak aan de rechterkant belanden
   nav_spacer(),
   
-  # De links aan de rechterkant van de navigatiebalk
-  nav_item(
-    tags$a(
-      shiny::icon("github"), " GitHub", 
-      href = "https://github.com/costerAnalytics/wsappproductie", 
-      target = "_blank",
-      style = "color: inherit; text-decoration: none;"
-    )
-  ),
-  nav_item(
-    tags$a(
-      shiny::icon("globe"), " Website van de workshop", 
-      href = "https://costeranalytics.github.io/workshoprshiny/", 
-      target = "_blank",
-      style = "color: inherit; text-decoration: none; margin-left: 15px;"
-    )
-  ),
-
-  !!!cards 
+  nav_item(tags$a(shiny::icon("github"), " GitHub", href = "https://github.com/costerAnalytics/wsappproductie", target = "_blank", style = "color: inherit; text-decoration: none;")),
+  nav_item(tags$a(shiny::icon("globe"), " Website", href = "https://github.com/costerAnalytics/wsappproductie", target = "_blank", style = "color: inherit; text-decoration: none; margin-left: 15px;"))
 )
 
 
@@ -187,7 +153,7 @@ server = function(input, output,session) {
         dom = 'ltp',
         autoWidth = TRUE, # Verplicht om handmatige breedtes toe te staan
         columnDefs = list(
-
+          
           list(
             targets = datum_index, # De index van de datumkolom
             width = '150px',       # Pas dit getal aan om hem breder of smaller te maken
@@ -210,9 +176,26 @@ server = function(input, output,session) {
         )
       )
   })
+  
+  # Statistiek 1: aantal rijen
+  output$stat_rijen <- renderText({ nrow(dt()) })
+  
+  # Statistiek 2: aantal unieke dieren in selectie
+  output$stat_dieren <- renderText({ n_distinct(dt()$id) })
+  
+  
+  
+  # Download handlerfunctionaliteit
+  output$download_data <- downloadHandler(
+    filename = function() { paste("productiedata-export-", Sys.Date(), ".csv", sep = "") },
+    content = function(file) { write.csv(dt(), file, row.names = FALSE) }
+  )
 }
+  
+
 
 shinyApp(ui,server)
 
 
 
+shinyApp(ui = ui, server = server)
