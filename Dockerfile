@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libcurl4-openssl-dev \
     libxml2-dev \
+    libwebp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Installeer R dependencies
