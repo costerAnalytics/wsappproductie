@@ -26,11 +26,25 @@ inputs <- list(
 
 cards <- list(
   # Extra: Waarde-boxen voor snelle statistieken bovenaan
+  # Waarde-boxen voor snelle statistieken bovenaan
   layout_column_wrap(
     width = 1/2,
-    value_box(title = "Geselecteerde Rijen", value = textOutput("stat_rijen"), showcase = shiny::icon("database")),
-    value_box(title = "Geselecteerde Dieren", value = textOutput("stat_dieren"), showcase = shiny::icon("cow"), theme = "teal")
+    value_box(
+      title = "Geselecteerde Rijen", 
+      # OPLOSSING: Verpak de output in een span met een aangepaste lettergrootte zodat het altijd past
+      value = tags$span(textOutput("stat_rijen"), style = "font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: bold;"), 
+      showcase = shiny::icon("database"),
+      theme = "primary"
+    ),
+    value_box(
+      title = "Geselecteerde Dieren", 
+      value = tags$span(textOutput("stat_dieren"), style = "font-size: clamp(1.5rem, 4vw, 2.5rem); font-weight: bold;"), 
+      showcase = shiny::icon("cow"), 
+      theme = "teal"
+    )
   ),
+  
+
   card(
     full_screen = TRUE,
     card_header("Kenmerken over de tijd"),
